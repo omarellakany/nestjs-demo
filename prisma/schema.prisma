@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Application {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @default(cuid())
+  name      String
+  chats     Chat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+}
+
+model Chat {
+  id               Int         @id @default(autoincrement())
+  number           Int
+  applicationToken String
+  application      Application @relation(fields: [applicationToken], references: [token])
+  messages         Message[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Ensuring that no 2 chats in the same application have the same number
+  @@unique([number, applicationToken])
+  @@index([number, applicationToken])
+}
+
+model Message {
+  id                   Int      @id @default(autoincrement())
+  number               Int
+  body                 String
+  chatNumber           Int
+  chatApplicationToken String
+  chat                 Chat     @relation(fields: [chatNumber, chatApplicationToken], references: [number, applicationToken])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([chatNumber, chatApplicationToken, createdAt])
+}
